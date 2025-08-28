@@ -6,7 +6,7 @@ class WahaClient:
         # Load settings from WAHA Settings (Single DocType)
         settings = frappe.get_doc("WAHA Settings")
         self.base_url = settings.base_url.rstrip("/") if settings.base_url else None
-        self.api_key = settings.api_key
+        self.api_key = settings.get_password("api_key")
         self.default_session = settings.default_session or "default"
 
         if not self.base_url or not self.api_key:

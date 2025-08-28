@@ -5,5 +5,5 @@
 from frappe.model.document import Document
 
 
-class WAHASettings(Document):
+class ScheduledWhatsAppMessage(Document):
 	pass

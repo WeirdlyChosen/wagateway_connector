@@ -1,7 +1,8 @@
 {
  "actions": [],
  "allow_rename": 1,
- "creation": "2025-08-19 17:03:02.247250",
+ "autoname": "prompt",
+ "creation": "2025-08-22 02:17:34.667887",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
@@ -28,31 +29,36 @@
    "fieldname": "status",
    "fieldtype": "Select",
    "label": "Status",
-   "options": "STARTED\nSTOPPED\nFAILED\nLOGGED_OUT"
+   "options": "STARTED\nSTOPPED\nFAILED\nLOGGED_OUT\nWORKING",
+   "read_only": 1
   },
   {
    "fieldname": "engine",
    "fieldtype": "Data",
-   "label": "Engine"
+   "label": "Engine",
+   "read_only": 1
   },
   {
    "fieldname": "last_sync",
    "fieldtype": "Datetime",
-   "label": "Last Sync"
+   "label": "Last Sync",
+   "read_only": 1
   },
   {
    "fieldname": "info_json",
    "fieldtype": "Long Text",
-   "label": "Session Info (JSON)"
+   "label": "Session Info (JSON)",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-08-19 17:29:12.706126",
+ "modified": "2025-08-28 14:41:46.020611",
  "modified_by": "Administrator",
  "module": "Whatsapp Gateway Connector",
  "name": "WAHA Session",
+ "naming_rule": "Set by user",
  "owner": "Administrator",
  "permissions": [
   {
@@ -71,5 +77,26 @@
  "row_format": "Dynamic",
  "sort_field": "modified",
  "sort_order": "DESC",
- "states": []
+ "states": [
+  {
+   "color": "Green",
+   "title": "STARTED"
+  },
+  {
+   "color": "Orange",
+   "title": "STOPPED"
+  },
+  {
+   "color": "Red",
+   "title": "FAILED"
+  },
+  {
+   "color": "Gray",
+   "title": "LOGGED_OUT"
+  },
+  {
+   "color": "Green",
+   "title": "WORKING"
+  }
+ ]
 }

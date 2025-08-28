@@ -165,6 +165,17 @@ app_license = "agpl-3.0"
 # 		"wagateway_connector.tasks.monthly"
 # 	],
 # }
+scheduler_events = {
+    "cron": {
+        "*/1 * * * *": [  # run every 1 minute
+            "wagateway_connector.tasks.send_scheduled_whatsapp_messages"
+        ],
+        "0 0 * * *": [  # reset at midnight
+            "wagateway_connector.tasks.reset_scheduled_messages"
+        ]
+    }
+}
+
 
 # Testing
 # -------
@@ -242,3 +253,6 @@ app_license = "agpl-3.0"
 # 	"Logging DocType Name": 30  # days to retain logs
 # }
 
+patches = [
+    "wagateway_connector.patches.add_whatsapp_medium"
+]

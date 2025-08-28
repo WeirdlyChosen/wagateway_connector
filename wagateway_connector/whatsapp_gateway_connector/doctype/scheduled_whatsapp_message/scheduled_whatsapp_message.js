@@ -1,0 +1,30 @@
+// Copyright (c) 2025, HomeAutomator.id and contributors
+// For license information, please see license.txt
+
+// frappe.ui.form.on("Scheduled WhatsApp Message", {
+// 	refresh(frm) {
+
+// 	},
+// });
+frappe.ui.form.on('Scheduled WhatsApp Message', {
+    refresh(frm) {
+        if (!frm.is_new() && frm.doc.disabled == 0) {
+            frm.add_custom_button(__('Send Now'), function() {
+                frappe.call({
+                    method: "wagateway_connector.api.send_scheduled_message_now",
+                    args: { docname: frm.doc.name },
+                    callback: function(r) {
+                        if (r.message) {
+                            frm.set_value("status", r.message.status);
+                            frm.refresh_field("status");
+                            frappe.show_alert({
+                                message: __("Message " + r.message.status),
+                                indicator: (r.message.status === "Sent" ? "green" : "red")
+                            });
+                        }
+                    }
+                });
+            }, __("Actions"));
+        }
+    }
+});

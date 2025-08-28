@@ -1,0 +1,117 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2025-08-27 14:01:35.226379",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_break_0bwk",
+  "title",
+  "schedule_time",
+  "disabled",
+  "column_break_xvje",
+  "status",
+  "waha_session",
+  "section_break_jblx",
+  "contacts",
+  "message"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_break_0bwk",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "title",
+   "fieldtype": "Data",
+   "label": "Title"
+  },
+  {
+   "fieldname": "message",
+   "fieldtype": "Small Text",
+   "label": "Message"
+  },
+  {
+   "fieldname": "schedule_time",
+   "fieldtype": "Time",
+   "label": "Schedule Time"
+  },
+  {
+   "default": "Draft",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Draft\nQueued\nSent\nFailed",
+   "read_only": 1
+  },
+  {
+   "default": "default",
+   "fieldname": "waha_session",
+   "fieldtype": "Link",
+   "label": "WAHA Session",
+   "options": "WAHA Session"
+  },
+  {
+   "fieldname": "contacts",
+   "fieldtype": "Small Text",
+   "label": "Contacts (comma separated)"
+  },
+  {
+   "fieldname": "column_break_xvje",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_jblx",
+   "fieldtype": "Section Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "disabled",
+   "fieldtype": "Check",
+   "label": "Disabled"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2025-08-28 13:32:14.716316",
+ "modified_by": "Administrator",
+ "module": "Whatsapp Gateway Connector",
+ "name": "Scheduled WhatsApp Message",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [
+  {
+   "color": "Yellow",
+   "title": "Draft"
+  },
+  {
+   "color": "Blue",
+   "title": "Queued"
+  },
+  {
+   "color": "Green",
+   "title": "Sent"
+  },
+  {
+   "color": "Red",
+   "title": "Failed"
+  }
+ ]
+}

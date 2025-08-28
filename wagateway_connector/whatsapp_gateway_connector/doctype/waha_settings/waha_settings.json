@@ -1,25 +1,34 @@
 {
  "actions": [],
  "allow_rename": 1,
- "creation": "2025-08-19 16:53:43.322181",
+ "creation": "2025-08-22 01:22:59.167721",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "whatsapp_gateway_base_url",
+  "section_break_1v4r",
+  "base_url",
   "api_key",
   "default_session",
-  "use_public_file_url"
+  "use_public_url"
  ],
  "fields": [
   {
-   "fieldname": "whatsapp_gateway_base_url",
+   "fieldname": "section_break_1v4r",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "base_url",
    "fieldtype": "Data",
-   "label": "Whatsapp Gateway Base URL"
+   "in_list_view": 1,
+   "label": "WAHA Base URL",
+   "reqd": 1
   },
   {
    "fieldname": "api_key",
    "fieldtype": "Password",
-   "label": "API Key"
+   "in_list_view": 1,
+   "label": "X-Api-Key",
+   "reqd": 1
   },
   {
    "fieldname": "default_session",
@@ -27,16 +36,17 @@
    "label": "Default Session"
   },
   {
-   "default": "0",
-   "fieldname": "use_public_file_url",
+   "default": "1",
+   "fieldname": "use_public_url",
    "fieldtype": "Check",
    "label": "Use Public File URL"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
+ "issingle": 1,
  "links": [],
- "modified": "2025-08-19 17:01:26.688623",
+ "modified": "2025-08-22 01:25:43.788814",
  "modified_by": "Administrator",
  "module": "Whatsapp Gateway Connector",
  "name": "WAHA Settings",
@@ -46,10 +56,8 @@
    "create": 1,
    "delete": 1,
    "email": 1,
-   "export": 1,
    "print": 1,
    "read": 1,
-   "report": 1,
    "role": "System Manager",
    "share": 1,
    "write": 1
