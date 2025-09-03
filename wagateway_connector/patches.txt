@@ -4,3 +4,5 @@
 
 [post_model_sync]
 # Patches added in this section will be executed after doctypes are migrated
+wagateway_connector.patches.add_contact_fields
+wagateway_connector.patches.set_wa_address_for_existing_contacts

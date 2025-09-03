@@ -48,12 +48,6 @@
    "fieldtype": "Table",
    "label": "WhatsApp Groups",
    "options": "WAHA Session Group"
-  },
-  {
-   "fieldname": "group_info_json",
-   "fieldtype": "Long Text",
-   "label": "Session Info (JSON)",
-   "read_only": 1
   }
  ],
  "grid_page_length": 50,

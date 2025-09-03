@@ -1,6 +1,24 @@
 import frappe
 import requests
+import re
 from wagateway_connector.waha_client import WahaClient
+
+#### Helpers ####
+def sanitize_contact_name(name: str) -> str:
+    """Remove emojis, symbols, and special characters from contact name."""
+    if not name:
+        return "Unnamed"
+
+    # Keep letters, numbers, spaces, underscores, and dashes only
+    cleaned = re.sub(r'[^A-Za-z0-9\s_-]', '', name)
+
+    # Collapse extra spaces
+    cleaned = re.sub(r'\s+', ' ', cleaned).strip()
+
+    # Ensure not empty
+    return cleaned or "Unnamed"
+
+#### END of Helpers ####
 
 #### WAHA Sessions ####
 @frappe.whitelist()
@@ -77,7 +95,7 @@ def test_waha_session(docname: str):
 
 @frappe.whitelist()
 def sync_whatsapp_groups(docname: str):
-    """Fetch WhatsApp groups via WAHA and sync them into WAHA Session child table"""
+    """Fetch WhatsApp groups via WAHA, sync into WAHA Session child table, and auto-sync with Contact records"""
     client = WahaClient()
     session = frappe.get_doc("WAHA Session", docname)
 
@@ -86,10 +104,10 @@ def sync_whatsapp_groups(docname: str):
     existing = {g.jid: g for g in session.groups}
     seen = set()
 
+    # --- Phase 1: Sync child table ---
     for g in groups:
         jid = g.get("JID")
         name = g.get("Name")
-
         if not jid:
             continue
 
@@ -99,20 +117,58 @@ def sync_whatsapp_groups(docname: str):
             row = existing[jid]
             if row.name1 != name:
                 row.name1 = name
-                frappe.logger().info(f"Updated group: {jid} -> {name}")
+                frappe.logger().info(f"Updated group row: {jid} -> {name}")
         else:
             session.append("groups", {"jid": jid, "name1": name})
-            frappe.logger().info(f"Added new group: {jid} -> {name}")
+            frappe.logger().info(f"Added new group row: {jid} -> {name}")
 
-    # Remove groups that no longer exist
+    # remove groups not present
     for row in list(session.groups):
         if row.jid not in seen:
-            frappe.logger().info(f"Removing group: {row.jid}")
+            frappe.logger().info(f"Removing group row: {row.jid}")
             session.remove(row)
 
-    # Save raw JSON response too
+    # save JSON + child rows first
     session.group_info_json = frappe.as_json(groups, indent=2)
+    session.save(ignore_permissions=True)
+    frappe.db.commit()
 
+    # --- Phase 2: Sync with Contact ---
+    for g in groups:
+        jid = g.get("JID")
+        name = g.get("Name")
+        if not jid:
+            continue
+
+        sanitized_name = sanitize_contact_name(name) or "Group"
+
+        # ensure uniqueness of first_name
+        base_name = sanitized_name
+        while frappe.db.exists("Contact", {"first_name": sanitized_name}):
+            suffix = jid.split("@")[0][-4:]
+            sanitized_name = f"{base_name}_{suffix}"
+
+        # check if contact already exists
+        contact_docname = frappe.db.exists("Contact", {"wag_id": jid})
+        if contact_docname:
+            contact = frappe.get_doc("Contact", contact_docname)
+            if contact.first_name != sanitized_name:
+                contact.first_name = sanitized_name
+                contact.save(ignore_permissions=True)
+        else:
+            contact = frappe.new_doc("Contact")
+            contact.first_name = sanitized_name
+            contact.wag_id = jid
+            contact.wa_address = jid
+            contact.insert(ignore_permissions=True)
+            frappe.logger().info(f"Created contact for {jid}: {sanitized_name}")
+
+        # --- Link child row to Contact ---
+        row = next((r for r in session.groups if r.jid == jid), None)
+        if row and not row.contact:
+            row.contact = contact.name
+
+    # save again after linking contacts
     session.save(ignore_permissions=True)
     frappe.db.commit()
 

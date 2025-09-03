@@ -84,6 +84,7 @@ app_license = "agpl-3.0"
 
 # before_install = "wagateway_connector.install.before_install"
 # after_install = "wagateway_connector.install.after_install"
+after_install = "wagateway_connector.contact_customizations.add_contact_custom_fields"
 
 # Uninstallation
 # ------------
@@ -144,6 +145,11 @@ app_license = "agpl-3.0"
 # 		"on_trash": "method"
 # 	}
 # }
+doc_events = {
+    "Contact": {
+        "validate": "wagateway_connector.contact_customizations.update_wa_address"
+    }
+}
 
 # Scheduled Tasks
 # ---------------
