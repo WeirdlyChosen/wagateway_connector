@@ -78,20 +78,17 @@ def test_waha_session(docname: str):
 @frappe.whitelist()
 def sync_whatsapp_groups(docname: str):
     """Fetch WhatsApp groups via WAHA and sync them into WAHA Session child table"""
-    from wagateway_connector.waha_client import WahaClient
-
     client = WahaClient()
     session = frappe.get_doc("WAHA Session", docname)
 
-    # 🔹 You must implement this in waha_client.py
     groups = client.get_groups(session.name)
 
     existing = {g.jid: g for g in session.groups}
     seen = set()
 
     for g in groups:
-        jid = g.get("id")
-        name = g.get("name")
+        jid = g.get("JID")
+        name = g.get("Name")
 
         if not jid:
             continue
@@ -101,43 +98,26 @@ def sync_whatsapp_groups(docname: str):
         if jid in existing:
             row = existing[jid]
             if row.name1 != name:
-                row.name1 = name  # update group name if changed
+                row.name1 = name
+                frappe.logger().info(f"Updated group: {jid} -> {name}")
         else:
-            session.append("groups", {
-                "jid": jid,
-                "name1": name
-            })
+            session.append("groups", {"jid": jid, "name1": name})
+            frappe.logger().info(f"Added new group: {jid} -> {name}")
 
     # Remove groups that no longer exist
     for row in list(session.groups):
         if row.jid not in seen:
+            frappe.logger().info(f"Removing group: {row.jid}")
             session.remove(row)
 
-    # Debugging logs
-    frappe.logger().info(f"Processing group {jid} - {name}")   # DEBUG
-
-    seen.add(jid)
-
-    if jid in existing:
-        row = existing[jid]
-        if row.name1 != name:
-            row.name1 = name
-            frappe.logger().info(f"Updated group name: {jid} -> {name}")  # DEBUG
-    else:
-        session.append("groups", {
-            "jid": jid,
-            "name1": name
-        })
-        frappe.logger().info(f"Added new group: {jid} -> {name}")  # DEBUG
-    # END of logger
-
-    # Save full JSON response into field
+    # Save raw JSON response too
     session.group_info_json = frappe.as_json(groups, indent=2)
 
     session.save(ignore_permissions=True)
     frappe.db.commit()
 
     return {"synced": len(groups)}
+
 
 @frappe.whitelist()
 def get_waha_qr(docname):
