@@ -167,7 +167,7 @@ app_license = "agpl-3.0"
 # }
 scheduler_events = {
     "cron": {
-        "*/1 * * * *": [  # run every 1 minute
+        "*/5 * * * *": [  # run every 1 minute
             "wagateway_connector.tasks.send_scheduled_whatsapp_messages"
         ],
         "0 0 * * *": [  # reset at midnight

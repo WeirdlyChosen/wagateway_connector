@@ -4,9 +4,8 @@ from wagateway_connector.waha_client import WahaClient
 from datetime import datetime, time, timedelta
 
 
-def process_single_message(docname):
-    frappe.logger().info(f"➡️ Entered process_single_message for {docname}") # logger
 
+def process_single_message(docname):
     now = now_datetime()
     client = WahaClient()
     doc = frappe.get_doc("Scheduled WhatsApp Message", docname)
@@ -23,11 +22,12 @@ def process_single_message(docname):
     for chat_id in contacts:
         try:
             client.send_text(chat_id=chat_id, text=doc.message,
-                             session=doc.waha_session or client.default_session)
+                             session=doc.waha_session)
+            frappe.log_error(message=f"Sending to {chat_id}", title="WAHA sending") #   logger to error log
 
             # create Communication log on success
             comm = frappe.new_doc("Communication")
-            comm.communication_medium = "WhatsApp"
+            comm.communication_medium = "Chat"
             comm.sent_or_received = "Sent"
             comm.content = doc.message
             comm.recipients = chat_id
@@ -42,12 +42,12 @@ def process_single_message(docname):
 
         except Exception as e:
             success = False
-            
+
             # failure log
             comm = frappe.new_doc("Communication")
-            comm.communication_medium = "WhatsApp"
+            comm.communication_medium = "Chat"
             comm.sent_or_received = "Sent"
-            comm.content = f"Failed to send message: {e}"
+            comm.content = f"Failed to send message: Payload: chat_id={chat_id}, text={doc.message}, session={doc.waha_session} | {e}"
             comm.recipients = chat_id
             comm.reference_doctype = doc.doctype
             comm.reference_name = doc.name
@@ -74,47 +74,45 @@ def process_single_message(docname):
 
 def send_scheduled_whatsapp_messages():
     """Loop through all scheduled WhatsApp messages and send them if due"""
-    frappe.log_error(message="Scheduler triggered", title="WAHA Cron Test") # logger
-    frappe.logger().info("🔔 Scheduler triggered send_scheduled_whatsapp_messages") # logger
     now = now_datetime()
-    frappe.logger().info(f"🚀 Scheduler triggered at {now}") # logger
 
     docs = frappe.get_all(
         "Scheduled WhatsApp Message",
-        filters={"disabled": 0},  # check all active messages
-        #filters={"disabled": 0, "status": ["!=", "Sent"]},  # only active, not already sent
+        filters={"disabled": 0, "status": ["!=", "Sent"]},  # only active, not already sent
         fields=["name", "schedule_time", "status", "modified"]
     )
 
-    frappe.logger().info(f"Found {len(docs)} scheduled messages to check") # logger    
-
     for d in docs:
         doc = frappe.get_doc("Scheduled WhatsApp Message", d.name)
-        frappe.logger().info(f"Processing doc: {doc.name}, status={doc.status}, schedule_time={doc.schedule_time}") # logger
-
 
         # --- check scheduled time ---
         if isinstance(doc.schedule_time, str):
             try:
                 schedule_t = datetime.strptime(doc.schedule_time, "%H:%M:%S").time()
             except ValueError:
-                frappe.log_error(f"Invalid time string for {doc.name}: {doc.schedule_time}", "WhatsApp Scheduler")
                 continue
         else:
-            schedule_t = doc.schedule_time
+            # If it's a timedelta, convert to time
+            if isinstance(doc.schedule_time, timedelta):
+                total_seconds = doc.schedule_time.total_seconds()
+                hours = int(total_seconds // 3600)
+                minutes = int((total_seconds % 3600) // 60)
+                seconds = int(total_seconds % 60)
+                schedule_t = time(hour=hours, minute=minutes, second=seconds)
+            else:
+                schedule_t = doc.schedule_time
 
+        # Combine today's date with the scheduled time
         schedule_dt = datetime.combine(now.date(), schedule_t)
-        if now < schedule_dt:
-            continue  # not yet time
+
+        if now >= schedule_dt and doc.status in ["Draft", "Pending", "Failed"]:
+            process_single_message(doc.name)
 
         # --- retry after 5 mins if failed ---
         if doc.status == "Failed":
             retry_after = add_to_date(doc.modified, minutes=5)
             if now < retry_after:
                 continue
-
-        # --- process the single message ---
-        process_single_message(doc.name)
 
     frappe.db.commit()
 

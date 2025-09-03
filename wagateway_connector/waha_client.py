@@ -61,3 +61,10 @@ class WahaClient:
         r = requests.post(self._url("/api/sendFile"), headers=self.headers, json=payload, timeout=60)
         r.raise_for_status()
         return r.json()
+
+    def get_groups(self, session: str):
+        """Fetch WhatsApp groups from WAHA"""
+        url = f"{self.base_url}/api/{session}/groups"
+        resp = requests.get(url, headers=self.headers)
+        resp.raise_for_status()
+        return resp.json() or []

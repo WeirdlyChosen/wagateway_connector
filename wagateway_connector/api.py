@@ -1,6 +1,8 @@
 import frappe
+import requests
 from wagateway_connector.waha_client import WahaClient
 
+#### WAHA Sessions ####
 @frappe.whitelist()
 def test_connection():
     """Test WAHA connectivity by calling /api/sessions"""
@@ -25,11 +27,11 @@ def fetch_all_waha_sessions():
         if not name:
             continue
 
-        doc = frappe.get_doc("WAHA Session", {"session_name": name}) \
-              if frappe.db.exists("WAHA Session", {"session_name": name}) \
+        doc = frappe.get_doc("WAHA Session", name) \
+              if frappe.db.exists("WAHA Session", name) \
               else frappe.new_doc("WAHA Session")
 
-        doc.session_name = name
+        doc.name = name
         doc.status = s.get("status")
         doc.engine = s.get("engine")
         doc.last_sync = now_datetime()
@@ -51,7 +53,7 @@ def refresh_waha_session(docname: str):
     if not session:
         frappe.throw(f"Session {docname} not found in WAHA")
 
-    doc = frappe.get_doc("WAHA Session", {"session_name": docname})
+    doc = frappe.get_doc("WAHA Session", docname)
     doc.status = session.get("status")
     doc.engine = session.get("engine")
     from frappe.utils import now_datetime
@@ -74,6 +76,92 @@ def test_waha_session(docname: str):
     return {"status": session.get("status")}
 
 @frappe.whitelist()
+def sync_whatsapp_groups(docname: str):
+    """Fetch WhatsApp groups via WAHA and sync them into WAHA Session child table"""
+    from wagateway_connector.waha_client import WahaClient
+
+    client = WahaClient()
+    session = frappe.get_doc("WAHA Session", docname)
+
+    # 🔹 You must implement this in waha_client.py
+    groups = client.get_groups(session.name)
+
+    existing = {g.jid: g for g in session.groups}
+    seen = set()
+
+    for g in groups:
+        jid = g.get("id")
+        name = g.get("name")
+
+        if not jid:
+            continue
+
+        seen.add(jid)
+
+        if jid in existing:
+            row = existing[jid]
+            if row.name1 != name:
+                row.name1 = name  # update group name if changed
+        else:
+            session.append("groups", {
+                "jid": jid,
+                "name1": name
+            })
+
+    # Remove groups that no longer exist
+    for row in list(session.groups):
+        if row.jid not in seen:
+            session.remove(row)
+
+    # Debugging logs
+    frappe.logger().info(f"Processing group {jid} - {name}")   # DEBUG
+
+    seen.add(jid)
+
+    if jid in existing:
+        row = existing[jid]
+        if row.name1 != name:
+            row.name1 = name
+            frappe.logger().info(f"Updated group name: {jid} -> {name}")  # DEBUG
+    else:
+        session.append("groups", {
+            "jid": jid,
+            "name1": name
+        })
+        frappe.logger().info(f"Added new group: {jid} -> {name}")  # DEBUG
+    # END of logger
+
+    # Save full JSON response into field
+    session.group_info_json = frappe.as_json(groups, indent=2)
+
+    session.save(ignore_permissions=True)
+    frappe.db.commit()
+
+    return {"synced": len(groups)}
+
+@frappe.whitelist()
+def get_waha_qr(docname):
+    """Return WAHA QR code if session not logged in"""
+    session = frappe.get_doc("WAHA Session", docname)
+
+    # Call WAHA API to check status
+    base_url = session.base_url  # assuming you stored this
+    try:
+        resp = requests.get(f"{base_url}/api/sessions/{session.session_id}")
+        data = resp.json()
+    except Exception as e:
+        frappe.throw(f"Failed to connect to WAHA: {e}")
+
+    if not data.get("is_logged_in"):
+        # Get QR code
+        qr_resp = requests.get(f"{base_url}/api/sessions/{session.session_id}/qr")
+        qr_data = qr_resp.json().get("qr")
+        return {"logged_in": False, "qr": qr_data}
+
+    return {"logged_in": True}
+
+#### Scheduled WhatsApp Messages ####
+@frappe.whitelist()
 def send_scheduled_message_now(docname: str):
     """Manually send a Scheduled WhatsApp Message"""
     doc = frappe.get_doc("Scheduled WhatsApp Message", docname)
@@ -92,7 +180,7 @@ def send_scheduled_message_now(docname: str):
             )
             # log communication
             comm = frappe.new_doc("Communication")
-            comm.communication_medium = "WhatsApp"
+            comm.communication_medium = "Chat"
             comm.sent_or_received = "Sent"
             comm.content = doc.message
             comm.recipients = chat_id
@@ -115,3 +203,5 @@ def send_scheduled_message_now(docname: str):
     frappe.db.commit()
 
     return {"status": "success", "doc": doc.name}
+
+

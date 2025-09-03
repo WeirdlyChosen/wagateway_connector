@@ -7,23 +7,16 @@
  "engine": "InnoDB",
  "field_order": [
   "section_break_drhr",
-  "session_name",
   "status",
   "engine",
   "last_sync",
-  "info_json"
+  "info_json",
+  "groups"
  ],
  "fields": [
   {
    "fieldname": "section_break_drhr",
    "fieldtype": "Section Break"
-  },
-  {
-   "fieldname": "session_name",
-   "fieldtype": "Data",
-   "in_list_view": 1,
-   "label": "Session Name",
-   "reqd": 1
   },
   {
    "fieldname": "status",
@@ -49,12 +42,24 @@
    "fieldtype": "Long Text",
    "label": "Session Info (JSON)",
    "read_only": 1
+  },
+  {
+   "fieldname": "groups",
+   "fieldtype": "Table",
+   "label": "WhatsApp Groups",
+   "options": "WAHA Session Group"
+  },
+  {
+   "fieldname": "group_info_json",
+   "fieldtype": "Long Text",
+   "label": "Session Info (JSON)",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-08-28 14:41:46.020611",
+ "modified": "2025-08-29 13:28:30.944295",
  "modified_by": "Administrator",
  "module": "Whatsapp Gateway Connector",
  "name": "WAHA Session",

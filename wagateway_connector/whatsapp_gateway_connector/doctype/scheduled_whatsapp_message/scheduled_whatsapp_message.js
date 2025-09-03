@@ -18,13 +18,13 @@ frappe.ui.form.on('Scheduled WhatsApp Message', {
                             frm.set_value("status", r.message.status);
                             frm.refresh_field("status");
                             frappe.show_alert({
-                                message: __("Message " + r.message.status),
-                                indicator: (r.message.status === "Sent" ? "green" : "red")
+                            message: __("Message " + r.message.status),
+                            indicator: (["Sent", "success", "Success"].includes(r.message.status) ? "green" : "red")
                             });
                         }
                     }
                 });
-            }, __("Actions"));
+            });
         }
     }
 });

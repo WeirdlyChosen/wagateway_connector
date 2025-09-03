@@ -1,12 +1,12 @@
 {
  "actions": [],
  "allow_rename": 1,
+ "autoname": "prompt",
  "creation": "2025-08-27 14:01:35.226379",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
   "section_break_0bwk",
-  "title",
   "schedule_time",
   "disabled",
   "column_break_xvje",
@@ -22,11 +22,6 @@
    "fieldtype": "Section Break"
   },
   {
-   "fieldname": "title",
-   "fieldtype": "Data",
-   "label": "Title"
-  },
-  {
    "fieldname": "message",
    "fieldtype": "Small Text",
    "label": "Message"
@@ -34,6 +29,7 @@
   {
    "fieldname": "schedule_time",
    "fieldtype": "Time",
+   "in_list_view": 1,
    "label": "Schedule Time"
   },
   {
@@ -41,14 +37,14 @@
    "fieldname": "status",
    "fieldtype": "Select",
    "label": "Status",
-   "options": "Draft\nQueued\nSent\nFailed",
+   "options": "Draft\nQueued\nPending\nSent\nFailed",
    "read_only": 1
   },
   {
    "default": "default",
    "fieldname": "waha_session",
    "fieldtype": "Link",
-   "label": "WAHA Session",
+   "label": "Whatsapp Session",
    "options": "WAHA Session"
   },
   {
@@ -74,10 +70,11 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-08-28 13:32:14.716316",
+ "modified": "2025-08-29 11:59:37.047903",
  "modified_by": "Administrator",
  "module": "Whatsapp Gateway Connector",
  "name": "Scheduled WhatsApp Message",
+ "naming_rule": "Set by user",
  "owner": "Administrator",
  "permissions": [
   {
