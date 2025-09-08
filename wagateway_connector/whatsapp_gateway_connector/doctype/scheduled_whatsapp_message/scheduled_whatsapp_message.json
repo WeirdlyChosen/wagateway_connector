@@ -9,11 +9,14 @@
   "section_break_0bwk",
   "schedule_time",
   "disabled",
+  "random_delay_start",
+  "random_delay_to",
+  "enable_scheduled_message",
   "column_break_xvje",
   "status",
   "waha_session",
   "section_break_jblx",
-  "contacts",
+  "contact",
   "message"
  ],
  "fields": [
@@ -37,6 +40,7 @@
    "fieldname": "status",
    "fieldtype": "Select",
    "label": "Status",
+   "no_copy": 1,
    "options": "Draft\nQueued\nPending\nSent\nFailed",
    "read_only": 1
   },
@@ -46,11 +50,6 @@
    "fieldtype": "Link",
    "label": "Whatsapp Session",
    "options": "WAHA Session"
-  },
-  {
-   "fieldname": "contacts",
-   "fieldtype": "Small Text",
-   "label": "Contacts (comma separated)"
   },
   {
    "fieldname": "column_break_xvje",
@@ -65,12 +64,39 @@
    "fieldname": "disabled",
    "fieldtype": "Check",
    "label": "Disabled"
+  },
+  {
+   "fieldname": "random_delay_start",
+   "fieldtype": "Int",
+   "label": "Random Delay Start",
+   "print_hide_if_no_value": 1
+  },
+  {
+   "fieldname": "random_delay_to",
+   "fieldtype": "Int",
+   "label": "Random Delay To",
+   "print_hide_if_no_value": 1
+  },
+  {
+   "fieldname": "contact",
+   "fieldtype": "Table",
+   "label": "Contact",
+   "options": "Scheduled Whatsapp Message Contact",
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "fetch_from": "waha_session.custom_enable_scheduled_message",
+   "fetch_if_empty": 1,
+   "fieldname": "enable_scheduled_message",
+   "fieldtype": "Check",
+   "label": "Enable Scheduled WhatsApp Message"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-08-29 11:59:37.047903",
+ "modified": "2025-09-05 10:39:48.540910",
  "modified_by": "Administrator",
  "module": "Whatsapp Gateway Connector",
  "name": "Scheduled WhatsApp Message",

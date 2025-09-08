@@ -44,3 +44,11 @@ def update_wa_address(doc, method=None):
 
     else:
         doc.wa_address = None
+
+def update_number(doc, method=None):
+    """Auto-fill number from linked Contact's wa_address"""
+    if doc.contact:
+        contact = frappe.get_doc("Contact", doc.contact)
+        if contact.wa_address:
+            # strip @c.us / @g.us
+            doc.number = contact.wa_address.split("@")[0]

@@ -86,6 +86,7 @@ app_license = "agpl-3.0"
 # after_install = "wagateway_connector.install.after_install"
 after_install = "wagateway_connector.contact_customizations.add_contact_custom_fields"
 
+
 # Uninstallation
 # ------------
 
@@ -148,8 +149,15 @@ after_install = "wagateway_connector.contact_customizations.add_contact_custom_f
 doc_events = {
     "Contact": {
         "validate": "wagateway_connector.contact_customizations.update_wa_address"
+    },
+    "Scheduled Whatsapp Message Contact": {
+        "before_save": "wagateway_connector.contact_customizations.update_number"
+    },
+    "WAHA Session": {
+        "on_update": "wagateway_connector.api.update_sched_msg_enable_flag"
     }
 }
+
 
 # Scheduled Tasks
 # ---------------

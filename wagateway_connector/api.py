@@ -1,6 +1,8 @@
 import frappe
 import requests
-import re
+import re # sanitizer
+import random # send WA message
+import time # send WA message
 from wagateway_connector.waha_client import WahaClient
 
 #### Helpers ####
@@ -196,25 +198,47 @@ def get_waha_qr(docname):
 
     return {"logged_in": True}
 
-#### Scheduled WhatsApp Messages ####
+def update_sched_msg_enable_flag(doc, method=None):
+    """Update enable_scheduled_message in Scheduled WhatsApp Message when WAHA Session is updated"""
+    frappe.logger().info(f"Updating Scheduled Messages for WAHA Session {doc.name}")
+
+    # propagate to all linked Scheduled WhatsApp Messages
+    sched_msgs = frappe.get_all("Scheduled WhatsApp Message", filters={"waha_session": doc.name})
+    for sm in sched_msgs:
+        frappe.db.set_value(
+            "Scheduled WhatsApp Message",
+            sm.name,
+            "enable_scheduled_message",
+            doc.enable_scheduled_message or 0
+        )
+    frappe.db.commit()
+
+#### Scheduled WhatsApp Messages #### 
 @frappe.whitelist()
 def send_scheduled_message_now(docname: str):
     """Manually send a Scheduled WhatsApp Message"""
     doc = frappe.get_doc("Scheduled WhatsApp Message", docname)
     client = WahaClient()
 
-    contacts = [c.strip() for c in (doc.contacts or "").split(",") if c.strip()]
-    if not contacts:
+    if not doc.contact:
         frappe.throw("No contacts found to send message")
 
-    for chat_id in contacts:
+    delay_start = doc.random_delay_start or 0
+    delay_to = doc.random_delay_to or 0
+
+    for row in doc.contact:
+        contact = frappe.get_doc("Contact", row.contact)
+        if not contact.wa_address:
+            frappe.throw(f"Contact {contact.name} has no WA Address")
+
         try:
             client.send_text(
-                chat_id=chat_id,
+                chat_id=contact.wa_address,
                 text=doc.message,
                 session=doc.waha_session or client.default_session
             )
             # log communication
+            chat_id=contact.first_name
             comm = frappe.new_doc("Communication")
             comm.communication_medium = "Chat"
             comm.sent_or_received = "Sent"
@@ -228,6 +252,11 @@ def send_scheduled_message_now(docname: str):
             comm.status = "Linked"
             comm.communication_date = frappe.utils.now_datetime()
             comm.insert(ignore_permissions=True)
+
+            # random delay
+            if delay_start or delay_to:
+                wait_time = random.randint(delay_start, delay_to)
+                time.sleep(wait_time)
 
         except Exception as e:
             doc.status = "Failed"

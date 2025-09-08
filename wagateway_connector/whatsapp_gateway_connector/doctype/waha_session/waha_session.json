@@ -11,7 +11,8 @@
   "engine",
   "last_sync",
   "info_json",
-  "groups"
+  "groups",
+  "enable_scheduled_message"
  ],
  "fields": [
   {
@@ -48,12 +49,18 @@
    "fieldtype": "Table",
    "label": "WhatsApp Groups",
    "options": "WAHA Session Group"
+  },
+  {
+   "default": "0",
+   "fieldname": "enable_scheduled_message",
+   "fieldtype": "Check",
+   "label": "Enable Scheduled WhatsApp Message"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-08-29 13:28:30.944295",
+ "modified": "2025-09-04 23:55:46.273883",
  "modified_by": "Administrator",
  "module": "Whatsapp Gateway Connector",
  "name": "WAHA Session",
