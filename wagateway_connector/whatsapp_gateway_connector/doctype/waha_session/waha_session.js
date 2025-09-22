@@ -18,6 +18,32 @@ frappe.ui.form.on('WAHA Session', {
                 }
             });
         }, __("Actions"));
+                // 🔹 Show QR button
+        frm.add_custom_button(__('Show QR'), function() {
+            frappe.call({
+                method: "wagateway_connector.api.get_qr_code",
+                args: { docname: frm.doc.name },
+                callback: function(r) {
+                    if (r.message && r.message.qr) {
+                        let d = new frappe.ui.Dialog({
+                            title: __("Scan WhatsApp QR"),
+                            fields: [{
+                                fieldtype: "HTML",
+                                fieldname: "qr_html",
+                                options: `<div style="text-align:center">
+                                    <img src="data:image/png;base64,${r.message.qr}" style="max-width:300px"/>
+                                    <p>${__("Scan this QR in WhatsApp App")}</p>
+                                </div>`
+                            }]
+                        });
+                        d.show();
+                    } else {
+                        frappe.msgprint(__('⚠ No QR available (maybe already logged in).'));
+                    }
+                }
+            });
+        }, __("Actions"));
+
         // 🔹 Sync Groups button
         frm.add_custom_button(__('Sync Groups'), function() {
             frappe.call({
@@ -30,6 +56,20 @@ frappe.ui.form.on('WAHA Session', {
                             indicator: "green"
                         });
                         frm.reload_doc(); // refresh child table
+                    }
+                }
+            });
+        }, __("Actions"));
+
+        // ✅ Stop Session / Logout
+        frm.add_custom_button(__('Stop Session'), function() {
+            frappe.call({
+                method: "wagateway_connector.api.stop_waha_session",
+                args: { docname: frm.doc.name },
+                callback: function(r) {
+                    if (r.message) {
+                        frappe.msgprint(__('🛑 Session stopped: ' + r.message.status));
+                        frm.reload_doc();
                     }
                 }
             });

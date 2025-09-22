@@ -1,27 +1,57 @@
 import frappe
 
-# Add Whatsapp fields for Contacts
 def execute():
-    contact = frappe.get_doc("DocType", "Contact")
-
-    def ensure_field(field):
-        if not any(f.fieldname == field["fieldname"] for f in contact.fields):
-            contact.append("fields", field)
-            frappe.msgprint(f"Added field {field['fieldname']} to Contact")
-
+    # ------------------------------------
+    # 1. Add Custom Fields
+    # ------------------------------------
     fields = [
-        {"fieldname": "wag_id", "fieldtype": "Data", "label": "WhatsApp Group JID", "read_only": 1, "hidden": 1},
-        {"fieldname": "wa_address", "fieldtype": "Data", "label": "WhatsApp Address", "read_only": 1, "hidden": 1},
+        {
+            "fieldname": "wag_id",
+            "fieldtype": "Data",
+            "label": "WhatsApp Group JID",
+            "read_only": 1,
+            "hidden": 1,
+        },
+        {
+            "fieldname": "wa_address",
+            "fieldtype": "Data",
+            "label": "WhatsApp Address",
+            "read_only": 1,
+            "hidden": 1,
+        },
+        {
+            "fieldname": "birthday",
+            "fieldtype": "Date",
+            "label": "Birthday",
+            "read_only": 1,
+            "hidden": 1,
+        },
+        {
+            "fieldname": "uid",
+            "fieldtype": "Data",
+            "label": "UID",
+            "default": random_uid(),  # default value at field definition
+            "reqd": 0,
+            "unique": 1,
+            "read_only": 1,
+            "no_copy": 1,
+            "hidden": 1,
+        },
     ]
-    for f in fields:
-        ensure_field(f)
 
-    contact.save()
-    frappe.db.commit()
+    for field in fields:
+        if not frappe.db.exists("Custom Field", {"dt": "Contact", "fieldname": field["fieldname"]}):
+            frappe.get_doc({
+                "doctype": "Custom Field",
+                "dt": "Contact",
+                **field
+            }).insert(ignore_permissions=True)
 
-# Change Permission level for sync with google contact to prevent other syncing contacts from google contacts
-def execute():
-    # Ensure the field exists first
+    frappe.clear_cache(doctype="Contact")
+
+    # ------------------------------------
+    # 2. Update permlevel for sync_with_google_contacts
+    # ------------------------------------
     field = frappe.db.get_value(
         "Custom Field",
         {"dt": "Contact", "fieldname": "sync_with_google_contacts"},

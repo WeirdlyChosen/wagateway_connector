@@ -96,6 +96,23 @@ def test_waha_session(docname: str):
     return {"status": session.get("status")}
 
 @frappe.whitelist()
+def get_qr_code(docname):
+    session = frappe.get_doc("WAHA Session", docname)
+    # Example: call WAHA endpoint for QR
+    res = requests.get(f"{session.server_url}/api/session/{session.session_id}/qr")
+    if res.ok:
+        return {"qr": res.json().get("qr_base64")}
+    return {"qr": None}
+
+@frappe.whitelist()
+def stop_waha_session(docname):
+    session = frappe.get_doc("WAHA Session", docname)
+    res = requests.post(f"{session.server_url}/api/session/{session.session_id}/logout")
+    if res.ok:
+        return {"status": "stopped"}
+    return {"status": "error"}
+
+@frappe.whitelist()
 def sync_whatsapp_groups(docname: str):
     """Fetch WhatsApp groups via WAHA, sync into WAHA Session child table, and auto-sync with Contact records"""
     client = WahaClient()

@@ -148,6 +148,7 @@ after_install = "wagateway_connector.contact_customizations.add_contact_custom_f
 # }
 doc_events = {
     "Contact": {
+        "before_insert": "wagateway_connector.contact_customizations.ensure_uid",
         "validate": "wagateway_connector.contact_customizations.update_wa_address"
     },
     "Scheduled Whatsapp Message Contact": {

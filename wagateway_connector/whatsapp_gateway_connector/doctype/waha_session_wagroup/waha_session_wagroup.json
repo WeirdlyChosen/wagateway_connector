@@ -40,7 +40,7 @@
  "modified": "2025-08-29 14:09:38.541190",
  "modified_by": "Administrator",
  "module": "Whatsapp Gateway Connector",
- "name": "WAHA Session Group",
+ "name": "WAHA Session WAGroup",
  "owner": "Administrator",
  "permissions": [],
  "row_format": "Dynamic",

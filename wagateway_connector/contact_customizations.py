@@ -1,5 +1,11 @@
 import frappe
 import re
+import random
+import string
+
+def random_uid(length=8):
+    import random, string
+    return ''.join(random.choices(string.ascii_uppercase + string.digits, k=length))
 
 def add_contact_custom_fields():
     from frappe.custom.doctype.custom_field.custom_field import create_custom_fields
@@ -19,6 +25,22 @@ def add_contact_custom_fields():
                 "fieldtype": "Data",
                 "read_only": 1,
                 "hidden": 1
+            },
+            {
+                "fieldname": "birthday",
+                "fieldtype": "Date",
+                "label": "Birthday",
+                "read_only": 0,
+                "hidden": 0,
+                "insert_after": "address",
+            },
+            {
+                "fieldname": "uid",
+                "fieldtype": "Data",
+                "label": "UID",
+                "read_only": 1,
+                "hidden": 1,
+                "unique": 1,
             },
         ]
     }
@@ -44,6 +66,11 @@ def update_wa_address(doc, method=None):
 
     else:
         doc.wa_address = None
+    
+
+def ensure_uid(doc, method=None):
+    if not doc.uid:
+        doc.uid = random_uid()
 
 def update_number(doc, method=None):
     """Auto-fill number from linked Contact's wa_address"""

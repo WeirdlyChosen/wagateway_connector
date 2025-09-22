@@ -5,5 +5,5 @@
 from frappe.model.document import Document
 
 
-class WAHASessionGroup(Document):
+class WhatsAppServer(Document):
 	pass
