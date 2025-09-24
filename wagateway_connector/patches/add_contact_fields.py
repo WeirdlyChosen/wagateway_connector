@@ -26,17 +26,6 @@ def execute():
             "read_only": 1,
             "hidden": 1,
         },
-        {
-            "fieldname": "uid",
-            "fieldtype": "Data",
-            "label": "UID",
-            "default": random_uid(),  # default value at field definition
-            "reqd": 0,
-            "unique": 1,
-            "read_only": 1,
-            "no_copy": 1,
-            "hidden": 1,
-        },
     ]
 
     for field in fields:
