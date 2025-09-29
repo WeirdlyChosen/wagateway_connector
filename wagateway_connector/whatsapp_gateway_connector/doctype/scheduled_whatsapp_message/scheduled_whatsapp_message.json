@@ -86,7 +86,7 @@
   },
   {
    "default": "0",
-   "fetch_from": "waha_session.custom_enable_scheduled_message",
+   "fetch_from": "waha_session.enable_scheduled_message",
    "fetch_if_empty": 1,
    "fieldname": "enable_scheduled_message",
    "fieldtype": "Check",
@@ -96,7 +96,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-09-29 22:18:14.300692",
+ "modified": "2025-09-29 22:32:48.324576",
  "modified_by": "Administrator",
  "module": "Whatsapp Gateway Connector",
  "name": "Scheduled WhatsApp Message",
