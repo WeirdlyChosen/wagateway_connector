@@ -6,22 +6,41 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "server_name"
+  "base_url",
+  "api_key",
+  "use_public_file_url"
  ],
  "fields": [
   {
-   "fieldname": "server_name",
+   "fieldname": "base_url",
    "fieldtype": "Data",
-   "label": "Server Name"
+   "label": "Server Base URL"
+  },
+  {
+   "fieldname": "api_key",
+   "fieldtype": "Password",
+   "label": "API key"
+  },
+  {
+   "default": "0",
+   "fieldname": "use_public_file_url",
+   "fieldtype": "Check",
+   "label": "Use Public File URL"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
- "links": [],
- "modified": "2025-09-16 00:02:21.198735",
- "modified_by": "Administrator",
+ "links": [
+  {
+   "link_doctype": "WAHA Session",
+   "link_fieldname": "name"
+  }
+ ],
+ "modified": "2025-11-26 14:54:40.600604",
+ "modified_by": "sampahtj@gmail.com",
  "module": "Whatsapp Gateway Connector",
  "name": "WhatsApp Server",
+ "naming_rule": "Set by user",
  "owner": "Administrator",
  "permissions": [
   {
@@ -42,14 +61,28 @@
    "print": 1,
    "read": 1,
    "report": 1,
-   "role": "WhatSapp User",
+   "role": "WhatsApp User",
    "select": 1,
    "share": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "if_owner": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "WhatsApp User",
+   "share": 1,
+   "write": 1
   }
  ],
  "row_format": "Dynamic",
+ "show_title_field_in_link": 1,
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [],
- "title_field": "server_name"
+ "title_field": "base_url"
 }

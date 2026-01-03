@@ -1,5 +1,6 @@
 import frappe
 import requests
+import json
 import re # sanitizer
 import random # send WA message
 import time # send WA message
@@ -22,13 +23,79 @@ def sanitize_contact_name(name: str) -> str:
 
 #### END of Helpers ####
 
+#### WhatsApp Server ####
+@frappe.whitelist()
+def test_wa_connection():
+    """Test WAHA connectivity by calling /api/sessions"""
+    try:
+        # Get the first WhatsApp Server (or filter to your preferred one)
+        wa_server_name = frappe.get_all("WhatsApp Server", limit=1)[0].name
+        wa_server = frappe.get_doc("WhatsApp Server", wa_server_name)
+
+        client = WahaClient(
+            base_url=wa_server.base_url,
+            api_key=wa_server.get_password("api_key")
+        )
+        frappe.log_error("DEBUG", f"API KEY USED: {wa_server.get_password('api_key')}")
+
+
+        sessions = client.get_sessions()
+
+        frappe.msgprint(f"✅ Connected to WAHA!\n\nFound {len(sessions)} sessions.")
+        return sessions
+
+    except Exception as e:
+        frappe.throw(f"❌ Connection failed: {e}")
+
+
 #### WAHA Sessions ####
+@frappe.whitelist()
+def start_waha_session(docname):
+    """Start a WAHA session using its linked WhatsApp Server"""
+    session = frappe.get_doc("WAHA Session", docname)
+
+    # --- Ensure linked server ---
+    if not getattr(session, "whatsapp_server", None):
+        frappe.throw("No WhatsApp Server linked to this WAHA Session")
+
+    wa_server = frappe.get_doc("WhatsApp Server", session.whatsapp_server)
+    if not wa_server.base_url:
+        frappe.throw("WhatsApp Server has no Base URL defined")
+
+    base_url = wa_server.base_url.rstrip("/")
+    headers = {}
+    if wa_server.api_key:
+        headers["x-api-key"] = wa_server.api_key
+
+    try:
+        # --- Call WAHA Start Endpoint ---
+        wa_server = frappe.get_doc("WhatsApp Server", session.whatsapp_server)
+        base_url = wa_server.base_url.rstrip("/")
+        headers = {"x-api-key": wa_server.api_key} if wa_server.api_key else {}
+        res = requests.post(f"{base_url}/api/sessions/{session.session_name}/logout", headers=headers)
+        res.raise_for_status()
+        data = res.json() if res.text else {}
+
+        # --- Update session status ---
+        session.status = data.get("status") or "STARTED"
+        session.save(ignore_permissions=True)
+        frappe.db.commit()
+
+        return {"ok": True, "message": f"✅ Session '{session.session_name}' started successfully."}
+
+    except Exception as e:
+        frappe.log_error(f"WAHA start session failed: {e}", "WAHA Start Error")
+        frappe.throw(f"❌ Failed to start session: {e}")
+
 @frappe.whitelist()
 def test_connection():
     """Test WAHA connectivity by calling /api/sessions"""
     try:
-        client = WahaClient()
         sessions = client.get_sessions()
+        wa_server = frappe.get_doc("WhatsApp Server", session.whatsapp_server)
+        client = WahaClient(base_url=wa_server.base_url, api_key=wa_server.get_password("api_key"))
+
+        
         frappe.msgprint(f"✅ Connected to WAHA!\n\nFound {len(sessions)} sessions.")
         return sessions
     except Exception as e:
@@ -37,8 +104,10 @@ def test_connection():
 @frappe.whitelist()
 def fetch_all_waha_sessions():
     """Sync all WAHA sessions from API into WAHA Session doctype"""
-    client = WahaClient()
     sessions = client.get_sessions()
+    wa_server = frappe.get_doc("WhatsApp Server", session.whatsapp_server)
+    client = WahaClient(base_url=wa_server.base_url, api_key=wa_server.get_password("api_key"))
+    
     from frappe.utils import now_datetime
 
     updated = []
@@ -66,12 +135,13 @@ def fetch_all_waha_sessions():
 @frappe.whitelist()
 def refresh_waha_session(docname: str):
     """Refresh a single WAHA Session from the API and update the doctype"""
-    client = WahaClient()
+    wa_server = frappe.get_doc("WhatsApp Server", session.whatsapp_server)
+    client = WahaClient(base_url=wa_server.base_url, api_key=wa_server.get_password("api_key"))
     sessions = client.get_sessions()
     session = next((s for s in sessions if s.get("name") == docname), None)
 
     if not session:
-        frappe.throw(f"Session {docname} not found in WAHA")
+        frappe.throw(f"Session <{docname}> not found in WAHA")
 
     doc = frappe.get_doc("WAHA Session", docname)
     doc.status = session.get("status")
@@ -85,29 +155,93 @@ def refresh_waha_session(docname: str):
 
 @frappe.whitelist()
 def test_waha_session(docname: str):
-    """Test if a WAHA session is alive"""
-    client = WahaClient()
+    """
+    Fetch all WAHA sessions and return them.
+    This version does NOT validate whether the given session_name exists.
+    """
+
+    # 1. Load the WAHA Session document
+    doc = frappe.get_doc("WAHA Session", docname)
+
+    if not doc.whatsapp_server:
+        frappe.throw("No WhatsApp Server linked to this WAHA Session.")
+
+    # 2. Load WhatsApp Server config
+    wa_server = frappe.get_doc("WhatsApp Server", doc.whatsapp_server)
+
+    if not wa_server.base_url:
+        frappe.throw("WhatsApp Server has no Base URL.")
+    if not wa_server.api_key:
+        frappe.throw("WhatsApp Server has no API Key set.")
+
+    # 3. Initialize WAHA client
+    client = WahaClient(
+        base_url = wa_server.base_url,
+        api_key  = wa_server.get_password("api_key")
+    )
+
+    # 4. Fetch ALL sessions from WAHA API
     sessions = client.get_sessions()
-    session = next((s for s in sessions if s.get("name") == docname), None)
 
-    if not session:
-        frappe.throw(f"Session {docname} not found in WAHA")
+    # 5. Return all sessions (no filtering)
+    return {
+        "status": f"OK: Sessions: {frappe.as_json(sessions, indent=2)}",
+        "total_sessions": len(sessions),
+        "sessions": sessions
+    }
 
-    return {"status": session.get("status")}
+
+
 
 @frappe.whitelist()
 def get_qr_code(docname):
+    """Return WAHA QR code using linked WhatsApp Server"""
+    # Load the WAHA Session document
     session = frappe.get_doc("WAHA Session", docname)
-    # Example: call WAHA endpoint for QR
-    res = requests.get(f"{session.server_url}/api/session/{session.session_id}/qr")
-    if res.ok:
-        return {"qr": res.json().get("qr_base64")}
-    return {"qr": None}
+
+    # Ensure it has a linked WhatsApp Server
+    if not getattr(session, "whatsapp_server", None):
+        frappe.throw("No WhatsApp Server linked to this WAHA Session")
+
+    # Load the linked WhatsApp Server
+    wa_server = frappe.get_doc("WhatsApp Server", session.whatsapp_server)
+    if not wa_server.base_url:
+        frappe.throw("WhatsApp Server has no Base URL defined")
+
+    # Prepare request info
+    base_url = wa_server.base_url.rstrip("/")
+    headers = {}
+    if wa_server.api_key:
+        headers["x-api-key"] = wa_server.api_key
+
+    # --- Step 1: Check if session is logged in ---
+    try:
+        resp = requests.get(f"{base_url}/api/sessions/{session.session_name}", headers=headers)
+        resp.raise_for_status()
+        data = resp.json()
+    except Exception as e:
+        frappe.throw(f"Failed to connect to WhatsApp Server: {e}")
+
+    # --- Step 2: Return QR if not logged in ---
+    if not data.get("is_logged_in"):
+        try:
+            qr_resp = requests.get(f"{base_url}/api/sessions/{session.session_name}/qr", headers=headers)
+            qr_resp.raise_for_status()
+            qr_data = qr_resp.json().get("qr")
+            return {"logged_in": False, "qr": qr_data}
+        except Exception as e:
+            frappe.throw(f"Failed to fetch QR code: {e}")
+
+    # --- Step 3: Already logged in ---
+    return {"logged_in": True}
+
 
 @frappe.whitelist()
 def stop_waha_session(docname):
     session = frappe.get_doc("WAHA Session", docname)
-    res = requests.post(f"{session.server_url}/api/session/{session.session_id}/logout")
+    wa_server = frappe.get_doc("WhatsApp Server", session.whatsapp_server)
+    base_url = wa_server.base_url.rstrip("/")
+
     if res.ok:
         return {"status": "stopped"}
     return {"status": "error"}
@@ -115,10 +249,11 @@ def stop_waha_session(docname):
 @frappe.whitelist()
 def sync_whatsapp_groups(docname: str):
     """Fetch WhatsApp groups via WAHA, sync into WAHA Session child table, and auto-sync with Contact records"""
-    client = WahaClient()
     session = frappe.get_doc("WAHA Session", docname)
-
-    groups = client.get_groups(session.name)
+    wa_server = frappe.get_doc("WhatsApp Server", session.whatsapp_server)
+    client = WahaClient(base_url=wa_server.base_url, api_key=wa_server.get_password("api_key"))
+    
+    groups = client.get_groups(session.session_name)
 
     existing = {g.jid: g for g in session.groups}
     seen = set()
@@ -202,14 +337,14 @@ def get_waha_qr(docname):
     # Call WAHA API to check status
     base_url = session.base_url  # assuming you stored this
     try:
-        resp = requests.get(f"{base_url}/api/sessions/{session.session_id}")
+        resp = requests.get(f"{base_url}/api/sessions/{session.session_name}")
         data = resp.json()
     except Exception as e:
         frappe.throw(f"Failed to connect to WAHA: {e}")
 
     if not data.get("is_logged_in"):
         # Get QR code
-        qr_resp = requests.get(f"{base_url}/api/sessions/{session.session_id}/qr")
+        qr_resp = requests.get(f"{base_url}/api/sessions/{session.session_name}/qr")
         qr_data = qr_resp.json().get("qr")
         return {"logged_in": False, "qr": qr_data}
 
@@ -235,7 +370,9 @@ def update_sched_msg_enable_flag(doc, method=None):
 def send_scheduled_message_now(docname: str):
     """Manually send a Scheduled WhatsApp Message"""
     doc = frappe.get_doc("Scheduled WhatsApp Message", docname)
-    client = WahaClient()
+    session = frappe.get_doc("WAHA Session", docname)
+    wa_server = frappe.get_doc("WhatsApp Server", session.whatsapp_server)
+    client = WahaClient(base_url=wa_server.base_url, api_key=wa_server.get_password("api_key"))
 
     if not doc.contact:
         frappe.throw("No contacts found to send message")
@@ -252,7 +389,7 @@ def send_scheduled_message_now(docname: str):
             client.send_text(
                 chat_id=contact.wa_address,
                 text=doc.message,
-                session=doc.waha_session or client.default_session
+                session=doc.waha_session
             )
             # log communication
             chat_id=contact.first_name
@@ -287,3 +424,85 @@ def send_scheduled_message_now(docname: str):
     return {"status": "success", "doc": doc.name}
 
 
+
+import frappe
+
+@frappe.whitelist(allow_guest=True)
+def update_contact_from_gcontact():
+    """Receive webhook from Google Contacts and update the Contact doctype."""
+
+    try:
+        data = frappe.request.get_json(force=True)
+
+        # === Parse fields ===
+        name_info = (data.get("names") or [{}])[0]
+        phone_info = (data.get("phoneNumbers") or [{}])[0]
+        email_info = (data.get("emailAddresses") or [{}])[0] if data.get("emailAddresses") else {}
+
+        first_name = name_info.get("givenName") or ""
+        middle_name = ""  # optional — could split givenName further if needed
+        last_name = name_info.get("familyName") or ""
+        salutation = name_info.get("honorificPrefix") or ""
+        designation = name_info.get("jobTitle") or ""
+        department = name_info.get("department") or ""
+        phone = phone_info.get("value") or ""
+        email = email_info.get("value") or ""
+
+        # === Find existing contact ===
+        contact = None
+        if phone:
+            contact = frappe.db.get_value("Contact Phone", {"phone": phone}, "parent")
+
+        if not contact and email:
+            contact = frappe.db.get_value("Contact Email", {"email_id": email}, "parent")
+
+        # === Create or update ===
+        if contact:
+            doc = frappe.get_doc("Contact", contact)
+        else:
+            doc = frappe.new_doc("Contact")
+
+        # === Set main fields ===
+        doc.first_name = first_name
+        doc.middle_name = middle_name
+        doc.last_name = last_name
+        doc.salutation = salutation
+        doc.designation = designation
+        doc.department = department
+
+        # === Email handling ===
+        if email:
+            # remove old emails to avoid duplicates
+            doc.set("email_ids", [])
+            doc.append("email_ids", {
+                "email_id": email,
+                "is_primary": 1
+            })
+
+        # === Phone handling ===
+        if phone:
+            doc.set("phone_nos", [])
+            doc.append("phone_nos", {
+                "phone": phone,
+                "is_primary_phone": 1,
+                "is_mobile": 1
+            })
+
+        # === Save changes ===
+        doc.save(ignore_permissions=True)
+        frappe.db.commit()
+
+        # === Log success ===
+        frappe.log_error(
+            title="Google Contact Sync Success",
+            message=f"Updated Contact: {doc.name}\n\nPayload:\n{frappe.as_json(data)}"
+        )
+
+        return {"status": "success", "contact": doc.name}
+
+    except Exception as e:
+        frappe.log_error(
+            title="Google Contact Sync Failed",
+            message=f"Error: {str(e)}\n\nPayload:\n{frappe.request.data}"
+        )
+        return {"status": "error", "message": str(e)}

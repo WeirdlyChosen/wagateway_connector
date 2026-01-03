@@ -5,11 +5,34 @@
 // 	refresh(frm) {
 frappe.ui.form.on('WAHA Session', {
     refresh: function(frm) {
+        frm.add_custom_button(__('Start Session'), function() {
+            frappe.confirm(
+                __("Start WhatsApp session '{0}' now?", [frm.doc.name]),
+                function() {
+                    frappe.call({
+                        method: "wagateway_connector.api.start_waha_session",
+                        args: { docname: frm.doc.name },
+                        freeze: true,
+                        freeze_message: __("Starting WhatsApp session..."),
+                        callback: function(r) {
+                            if (r.message && r.message.ok) {
+                                frappe.msgprint(r.message.message);
+                                frm.reload_doc();
+                            } else {
+                                frappe.msgprint(__('⚠ Failed to start session.'));
+                            }
+                        }
+                    });
+                }
+            );
+        }, __("Actions"));
+        
+
         frm.add_custom_button(__('Test Session'), function() {
             frappe.call({
                 method: "wagateway_connector.api.test_waha_session",
                 args: {
-                    docname: frm.doc.name
+                    docname: frm.doc.session_name
                 },
                 callback: function(r) {
                     if (r.message) {
@@ -18,7 +41,8 @@ frappe.ui.form.on('WAHA Session', {
                 }
             });
         }, __("Actions"));
-                // 🔹 Show QR button
+
+        // 🔹 Show QR button
         frm.add_custom_button(__('Show QR'), function() {
             frappe.call({
                 method: "wagateway_connector.api.get_qr_code",

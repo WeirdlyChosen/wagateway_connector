@@ -1,12 +1,14 @@
 {
  "actions": [],
  "allow_rename": 1,
- "autoname": "prompt",
+ "autoname": "format:{session_name} - {whatsapp_server}",
  "creation": "2025-08-22 02:17:34.667887",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
   "section_break_drhr",
+  "whatsapp_server",
+  "session_name",
   "status",
   "engine",
   "last_sync",
@@ -23,7 +25,7 @@
    "fieldname": "status",
    "fieldtype": "Select",
    "label": "Status",
-   "options": "STARTED\nSTOPPED\nFAILED\nLOGGED_OUT\nWORKING",
+   "options": "STARTING\nSTARTED\nSTOPPED\nFAILED\nLOGGED_OUT\nWORKING",
    "read_only": 1
   },
   {
@@ -55,16 +57,32 @@
    "fieldname": "enable_scheduled_message",
    "fieldtype": "Check",
    "label": "Enable Scheduled WhatsApp Message"
+  },
+  {
+   "fieldname": "whatsapp_server",
+   "fieldtype": "Link",
+   "label": "WhatsApp Server",
+   "options": "WhatsApp Server"
+  },
+  {
+   "fieldname": "session_name",
+   "fieldtype": "Data",
+   "label": "Session Name"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
- "links": [],
- "modified": "2025-09-29 22:17:36.764471",
- "modified_by": "Administrator",
+ "links": [
+  {
+   "link_doctype": "WhatsApp Server",
+   "link_fieldname": "name"
+  }
+ ],
+ "modified": "2025-11-26 15:27:05.542557",
+ "modified_by": "sampahtj@gmail.com",
  "module": "Whatsapp Gateway Connector",
  "name": "WAHA Session",
- "naming_rule": "Set by user",
+ "naming_rule": "Expression",
  "owner": "Administrator",
  "permissions": [
   {

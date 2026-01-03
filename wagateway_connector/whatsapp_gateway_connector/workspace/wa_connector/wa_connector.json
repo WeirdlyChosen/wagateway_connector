@@ -1,6 +1,6 @@
 {
  "charts": [],
- "content": "[{\"id\":\"Vm6dmERMMt\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">WA Connector</span>\",\"col\":12}},{\"id\":\"yfMb2OgI-p\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"WA HomeAutomator Settings\",\"col\":3}},{\"id\":\"nJMuzjHV6K\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"WA HomeAutomator Session\",\"col\":3}},{\"id\":\"77lSeqh3GJ\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Scheduled WA Message\",\"col\":3}}]",
+ "content": "[{\"id\":\"Vm6dmERMMt\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">WA Connector</span>\",\"col\":12}},{\"id\":\"yfMb2OgI-p\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"WA HomeAutomator Settings\",\"col\":3}},{\"id\":\"MyZQTuLK8d\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"WA Servers\",\"col\":3}},{\"id\":\"nJMuzjHV6K\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"WA HomeAutomator Session\",\"col\":3}},{\"id\":\"77lSeqh3GJ\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Scheduled WA Message\",\"col\":3}}]",
  "creation": "2025-09-03 23:16:20.668618",
  "custom_blocks": [],
  "docstatus": 0,
@@ -13,7 +13,7 @@
  "is_hidden": 0,
  "label": "WA Connector",
  "links": [],
- "modified": "2025-09-03 23:45:55.876122",
+ "modified": "2025-11-23 00:49:13.164434",
  "modified_by": "Administrator",
  "module": "Whatsapp Gateway Connector",
  "name": "WA Connector",
@@ -25,6 +25,14 @@
  "roles": [],
  "sequence_id": 28.0,
  "shortcuts": [
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "WA Servers",
+   "link_to": "WhatsApp Server",
+   "stats_filter": "[]",
+   "type": "DocType"
+  },
   {
    "color": "Grey",
    "doc_view": "List",

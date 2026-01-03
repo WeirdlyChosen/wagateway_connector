@@ -66,6 +66,18 @@ def update_wa_address(doc, method=None):
 
     else:
         doc.wa_address = None
+
+    
+    ## Give random email if no email is set
+    if doc.email_ids:
+        return
+
+    random_email = f"{random_uid()}@property.homeautomator.id"
+
+    doc.append("email_ids", {
+        "email_id": random_email,
+        "is_primary": 1
+    })
     
 
 def ensure_uid(doc, method=None):
